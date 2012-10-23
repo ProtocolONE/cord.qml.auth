@@ -3,6 +3,9 @@
 Qt.include('./Crypt.js');
 Qt.include('./restapi.js');
 
+//Replaced during CI build
+var authVersion = "@VERSION";
+
 function extend(Child, Parent) {
     var F = function() { }
     F.prototype = Parent.prototype
