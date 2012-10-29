@@ -122,7 +122,6 @@ ProviderGuest.prototype.confirm = function(userId, appKey, login, password, call
     });
 };
 
-
 var ProviderGameNet = function() {
 };
 extend(ProviderGameNet, ProviderBase);
@@ -150,6 +149,18 @@ ProviderGameNet.prototype.loginByHash = function(login, hash, callback) {
         self.jsonCredentialCallback(response, callback);
     });
 };
+
+ProviderGameNet.prototype.refreshCookie = function(userId, appKey, callback) {
+    var self = this,
+        request = new Uri(self.gnloginUri)
+            .addQueryParam('refreshCookie', '1')
+            .addQueryParam('userId', userId)
+            .addQueryParam('appKey', appKey);
+
+    http.request(request, function(response) {
+        self.jsonCredentialCallback(response, callback);
+    });
+}
 
 var ProviderVk = function(parent) {
     this.appId = 2452628;
