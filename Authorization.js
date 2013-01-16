@@ -264,7 +264,7 @@ ProviderVk.prototype.getUrl = function(redirectUrl) {
         .setPath('/oauth/authorize')
         .addQueryParam('client_id', this.appId)
         .addQueryParam('response_type', 'code')
-        .addQueryParam('scope', 'friends,offlin')
+        .addQueryParam('scope', 'friends,offline')
         .addQueryParam('display', 'popup')
         .addQueryParam('redirect_uri', redirectUrl)
 
