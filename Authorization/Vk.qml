@@ -37,6 +37,6 @@ Window {
             offlineWebApplicationCacheEnabled: false
         }
 
-        Component.onCompleted: WebViewHelper.clearCookies();
+        Component.onCompleted: WebViewHelper.setCookiesFromUrl('', 'https://vk.com/')
     }
 }
