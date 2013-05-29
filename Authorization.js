@@ -68,7 +68,8 @@ ProviderBase.prototype = {
     }
 };
 
-var ProviderRegister = function() {
+var ProviderRegister = function(mid) {
+    this.mid = mid || null;
 };
 extend(ProviderRegister, ProviderBase);
 
@@ -78,6 +79,7 @@ ProviderRegister.prototype.register = function(login, password, callback) {
             .addQueryParam('json', '1')
             .addQueryParam('registration', '1')
             .addQueryParam('license', 'true')
+            .addQueryParam('mid', self.mid)
             .addQueryParam('login', login)
             .addQueryParam('password', password);
 
