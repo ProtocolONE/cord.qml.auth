@@ -6,14 +6,9 @@ import '../restapi.js' as RestApi
 
 Window {
     id: window
-    width: 640
-    height: 480
-    visible: true
-    title: qsTr('WINDOW_TITLE_VK_AUTH')
-    flags: Qt.Tool
-    modality: Qt.ApplicationModal
 
     property alias webView: browser
+
     function link(code, rp, callback) {
         RestApi.Virality.linkAccount(
             code,
@@ -23,8 +18,25 @@ Window {
         );
     }
 
+    function clearCookies() {
+            WebViewHelper.setCookiesFromUrl('', 'https://vk.com')
+            WebViewHelper.setCookiesFromUrl('', 'https://login.vk.com')
+            WebViewHelper.setCookiesFromUrl('', 'http://gamenet.ru')
+            WebViewHelper.setCookiesFromUrl('', 'http://www.gamenet.ru')
+            WebViewHelper.setCookiesFromUrl('', 'https://gnlogin.ru')
+    }
+
+    width: 640
+    height: 480
+    visible: true
+    title: qsTr('WINDOW_TITLE_VK_AUTH')
+    flags: Qt.Tool
+    modality: Qt.ApplicationModal
+    onBeforeClosed: clearCookies();
+
     WebView {
         id: browser
+
         anchors.fill: parent
         preferredWidth: parent.width
         preferredHeight: parent.height
