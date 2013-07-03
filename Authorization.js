@@ -68,8 +68,9 @@ ProviderBase.prototype = {
     }
 };
 
-var ProviderRegister = function(mid) {
+var ProviderRegister = function(mid, hwid) {
     this.mid = mid || null;
+    this.hwid = hwid || null;
 };
 extend(ProviderRegister, ProviderBase);
 
@@ -80,6 +81,7 @@ ProviderRegister.prototype.register = function(login, password, callback) {
             .addQueryParam('registration', '1')
             .addQueryParam('license', 'true')
             .addQueryParam('mid', self.mid)
+            .addQueryParam('hwid', self.hwid)
             .addQueryParam('login', login)
             .addQueryParam('password', password);
 
@@ -88,8 +90,9 @@ ProviderRegister.prototype.register = function(login, password, callback) {
     });
 };
 
-var ProviderGuest = function(mid) {
+var ProviderGuest = function(mid, hwid) {
     this.guestMid = mid || null;
+    this.hwid = hwid || null;
 };
 extend(ProviderGuest, ProviderBase);
 
@@ -99,6 +102,10 @@ ProviderGuest.prototype.login = function(gameId, callback) {
 
     if (self.guestMid) {
         request.addQueryParam('mid', self.guestMid)
+    }
+
+    if (self.hwid) {
+        request.addQueryParam('hwid', self.hwid)
     }
 
     if (gameId) {
@@ -114,6 +121,7 @@ ProviderGuest.prototype.confirm = function(userId, appKey, login, password, call
     var self = this,
         request = new Uri(self.gnloginUri)
             .addQueryParam('guest', 'confirm')
+            .addQueryParam('hwid', self.hwid)
             .addQueryParam('userId', userId)
             .addQueryParam('appKey', appKey)
             .addQueryParam('login', login)
@@ -124,7 +132,8 @@ ProviderGuest.prototype.confirm = function(userId, appKey, login, password, call
     });
 };
 
-var ProviderGameNet = function() {
+var ProviderGameNet = function(hwid) {
+    this.hwid = hwid || null;
 };
 extend(ProviderGameNet, ProviderBase);
 
@@ -133,6 +142,7 @@ ProviderGameNet.prototype.login = function(login, password, callback) {
         request = new Uri(self.gnloginUri)
             .addQueryParam('login', login)
             .addQueryParam('passhash', Sha1.hash(password))
+            .addQueryParam('hwid', self.hwid)
             .addQueryParam('json', 1);
 
     http.request(request, function(response) {
@@ -145,6 +155,7 @@ ProviderGameNet.prototype.loginByHash = function(login, hash, callback) {
         request = new Uri(self.gnloginUri)
             .addQueryParam('login', login)
             .addQueryParam('passhash', hash)
+            .addQueryParam('hwid', self.hwid)
             .addQueryParam('json', 1);
 
     http.request(request, function(response) {
