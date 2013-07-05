@@ -4,15 +4,22 @@ Qt.include('./Crypt.js');
 Qt.include('./restapi.js');
 
 //Replaced during CI build
-var authVersion = "@VERSION";
+var authVersion = "@VERSION"
+    , _hwid
+    , _mid;
+
+function setup(options) {
+    _hwid = options.hwid || '';
+    _mid = options.mid || '';
+}
 
 function extend(Child, Parent) {
-    var F = function() { }
-    F.prototype = Parent.prototype
-    Child.prototype = new F()
-    Child.prototype.constructor = Child
-    Child.superclass = Parent.prototype
-};
+    var F = function() {};
+    F.prototype = Parent.prototype;
+    Child.prototype = new F();
+    Child.prototype.constructor = Child;
+    Child.superclass = Parent.prototype;
+}
 
 var Result = function() {};
 Result.Success = 1;
@@ -69,8 +76,8 @@ ProviderBase.prototype = {
 };
 
 var ProviderRegister = function(mid, hwid) {
-    this.mid = mid || null;
-    this.hwid = hwid || null;
+    this.mid = mid || _mid;
+    this.hwid = hwid || _hwid;
 };
 extend(ProviderRegister, ProviderBase);
 
@@ -91,8 +98,8 @@ ProviderRegister.prototype.register = function(login, password, callback) {
 };
 
 var ProviderGuest = function(mid, hwid) {
-    this.guestMid = mid || null;
-    this.hwid = hwid || null;
+    this.guestMid = mid || _mid;
+    this.hwid = hwid || _hwid;
 };
 extend(ProviderGuest, ProviderBase);
 
@@ -133,7 +140,7 @@ ProviderGuest.prototype.confirm = function(userId, appKey, login, password, call
 };
 
 var ProviderGameNet = function(hwid) {
-    this.hwid = hwid || null;
+    this.hwid = hwid || _hwid;
 };
 extend(ProviderGameNet, ProviderBase);
 
