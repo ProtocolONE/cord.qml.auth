@@ -280,12 +280,12 @@ ProviderVk.prototype.login = function(callback) {
 
 ProviderVk.prototype.getUrl = function(redirectUrl) {
     var uri = new Uri()
-        .setHost('http://api.vk.com')
+        .setHost('http://oauth.vk.com')
         .setPath('/oauth/authorize')
         .addQueryParam('client_id', this.appId)
         .addQueryParam('response_type', 'code')
         .addQueryParam('scope', 'friends,offline')
-        .addQueryParam('display', 'popup')
+        .addQueryParam('display', 'mobile')
         .addQueryParam('redirect_uri', redirectUrl)
 
     return uri.toString()
