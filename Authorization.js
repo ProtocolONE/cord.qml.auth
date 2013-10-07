@@ -184,7 +184,7 @@ ProviderGameNet.prototype.refreshCookie = function(userId, appKey, callback) {
 
 var ProviderVk = function(parent) {
     this.appId = 2452628;
-    this.redirectUrl = 'http://www.gamenet.ru/virality/auth';
+    this.redirectUrl = 'https://gnlogin.ru/social';
     this.titleApiUrl = 'gnlogin.ru';
     this.parentObject = parent;
     this.browser = null;
