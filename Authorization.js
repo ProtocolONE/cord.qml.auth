@@ -182,13 +182,14 @@ ProviderGameNet.prototype.refreshCookie = function(userId, appKey, callback) {
     });
 }
 
-var ProviderVk = function(parent) {
+var ProviderVk = function(parent, hwid) {
     this.appId = 2452628;
     this.redirectUrl = 'https://gnlogin.ru/social';
     this.titleApiUrl = 'gnlogin.ru';
     this.parentObject = parent;
     this.browser = null;
     this.browserComponent = null;
+    this.hwid = hwid || _hwid;
 };
 
 ProviderVk.prototype.createBrowserComponent = function(callback) {
@@ -246,7 +247,7 @@ ProviderVk.prototype.link = function(callback) {
         self.browser.webView.loadFailed.connect(function() { self.loadFailed(callback); });
         self.browser.webView.titleChanged.connect(function(title) { self.linkTitleChanged(title, callback); });
         self.browser.webView.urlChanged.connect(function(url) { self.urlChanged(url, callback); });
-        self.browser.webView.url = self.getUrl(self.redirectUrl + '?action=link');
+        self.browser.webView.url = self.getUrl('action=link');
         self.browser.beforeClosed.connect(function() { callback(Result.Cancel); });
     });
 };
@@ -273,20 +274,23 @@ ProviderVk.prototype.login = function(callback) {
         self.browser.webView.loadFailed.connect(function() { self.loadFailed(callback); });
         self.browser.webView.titleChanged.connect(function(title) { self.loginTitleChanged(title, callback); });
         self.browser.webView.urlChanged.connect(function(url) { self.urlChanged(url, callback); });
-        self.browser.webView.url = self.getUrl(self.redirectUrl + "?qGNA=1");
+        self.browser.webView.url = self.getUrl('qGNA=1');
         self.browser.beforeClosed.connect(function() { callback(Result.Cancel); });
     });
 };
 
-ProviderVk.prototype.getUrl = function(redirectUrl) {
-    var uri = new Uri()
+ProviderVk.prototype.getUrl = function(params) {
+    var rp = this.redirectUrl + '?hwid=' + this.hwid + (params ? ('&' + params) : '')
+        , uri;
+
+    uri = new Uri()
         .setHost('http://oauth.vk.com')
         .setPath('/oauth/authorize')
         .addQueryParam('client_id', this.appId)
         .addQueryParam('response_type', 'code')
         .addQueryParam('scope', 'friends,offline')
         .addQueryParam('display', 'mobile')
-        .addQueryParam('redirect_uri', redirectUrl)
+        .addQueryParam('redirect_uri', rp);
 
     return uri.toString()
 };
