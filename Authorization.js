@@ -5,21 +5,11 @@ Qt.include('./restapi.js');
 
 //Replaced during CI build
 var authVersion = "@VERSION"
+    , _gnLoginUrl = 'https://gnlogin.ru'
+    , _gnLoginTitleApiUrl = 'gnlogin.ru'
     , _hwid
-    , _mid;
-
-function setup(options) {
-    _hwid = options.hwid || '';
-    _mid = options.mid || '';
-}
-
-function extend(Child, Parent) {
-    var F = function() {};
-    F.prototype = Parent.prototype;
-    Child.prototype = new F();
-    Child.prototype.constructor = Child;
-    Child.superclass = Parent.prototype;
-}
+    , _mid
+    , _captcha;
 
 var Result = function() {};
 Result.Success = 1;
@@ -28,12 +18,176 @@ Result.ServiceAccountBlocked = 3;
 Result.WrongLoginOrPassword = 4;
 Result.UnknownError = 5;
 Result.Error = 6;
+Result.CaptchaRequired = 7;
+Result.CodeRequired = 8;
 
-var ProviderBase = function() {
-};
+/**
+ * Setup package params - hwid, mid, gnLoginUrl and titleApiUrl.
+ *
+ * @param options
+ */
+function setup(options) {
+    _hwid = options.hwid || '';
+    _mid = options.mid || '';
+    _gnLoginUrl = options.gnLoginUrl || _gnLoginUrl;
+    _gnLoginTitleApiUrl = options.titleApiUrl || _gnLoginTitleApiUrl;
+}
 
-ProviderBase.prototype = {
-    gnloginUri: 'https://gnlogin.ru',
+/**
+ * Set captcha text for next authorization attempt.
+ */
+function setCaptcha(value) {
+    _captcha = value;
+}
+
+/**
+ * Get url captcha image for given login.
+ */
+function getCaptchaImageSource(login) {
+    var url = new Uri(_gnLoginUrl)
+        .addQueryParam('captcha', 1)
+        .addQueryParam('type', 'login')
+        .addQueryParam('r', Math.random())
+        .addQueryParam('login', login);
+
+    return url.toString();
+}
+
+/**
+ * Send unblock code to user.
+ *
+ * @param {string} login GameNet login
+ * @param {string} method Should me `email` or `sms`
+ * @param {function} callback
+ */
+function sendUnblockCode(login, method, callback) {
+    var url = new Uri(_gnLoginUrl)
+        .setPath('/sendCode')
+        .addQueryParam('login', login)
+        .addQueryParam('method', method);
+
+    http.request(url, function(response) {
+        _private.jsonCredentialCallback(response, callback);
+    });
+}
+
+/**
+ * Generate new cookie string by given userId and appKey.
+ */
+function refreshCookie(userId, appKey, callback) {
+    var request = new Uri(_gnLoginUrl)
+        .addQueryParam('refreshCookie', '1')
+        .addQueryParam('userId', userId)
+        .addQueryParam('appKey', appKey);
+
+    http.request(request, function(response) {
+        _private.jsonCredentialCallback(response, callback);
+    });
+}
+
+/**
+ * Unblock user account with given code.
+ */
+function unblock(login, code, callback) {
+    var url = new Uri(_gnLoginUrl)
+        .setPath('/unblock')
+        .addQueryParam('login', login)
+        .addQueryParam('code', code);
+
+    http.request(url, function(response) {
+        _private.jsonCredentialCallback(response, callback);
+    });
+}
+
+/**
+ * Register new gamenet user.
+ *
+ * @param {string} login
+ * @param {string} password
+ * @param {function} callback
+ */
+function register(login, password, callback) {
+    var request = new Uri(_gnLoginUrl)
+        .addQueryParam('json', '1')
+        .addQueryParam('registration', '1')
+        .addQueryParam('license', 'true')
+        .addQueryParam('mid', _mid)
+        .addQueryParam('hwid', _hwid)
+        .addQueryParam('login', login)
+        .addQueryParam('password', password);
+
+    http.request(request, function(response) {
+        _private.jsonCredentialCallback(response, callback);
+    });
+}
+
+/**
+ * Login in gamenet by login and password.
+ *
+ * @param {string} login
+ * @param {string} password
+ * @param {function} callback
+ */
+function loginByGameNet(login, password, callback) {
+    var request = new Uri(_gnLoginUrl)
+        .addQueryParam('login', login)
+        .addQueryParam('passhash', Sha1.hash(password))
+        .addQueryParam('hwid', _hwid)
+        .addQueryParam('json', 1);
+
+    if (_captcha) {
+        request.addQueryParam('captcha', _captcha);
+    }
+
+    http.request(request, function(response) {
+        _captcha = '';
+        _private.jsonCredentialCallback(response, callback);
+    });
+}
+
+/**
+ * Login in gamenet by VK.
+ *
+ * @param {QMLObject} parent
+ * @param {function} callback
+ */
+function loginByVk(parent, callback) {
+    var auth = new ProviderVk(parent);
+    auth.login(callback);
+}
+
+/**
+ * Link gamenet account with VK.
+ *
+ * @param {QMLObject} parent
+ * @param {function} callback
+ */
+function linkVkAccount(parent, callback) {
+    var auth = new ProviderVk(parent);
+    auth.link(callback);
+}
+
+/**
+ * Return True is given code is success code.
+ *
+ * @return bool
+ */
+function isSuccess(code) {
+    return Result.Success === code;
+}
+
+var _private = {
+    remapErrorCode: function(code) {
+        var map = {};
+        map[0] = Result.UnknownError;
+        map[Error.CAPTCHA_REQUIRED] = Result.CaptchaRequired;
+        map[Error.AUTHORIZATION_LIMIT_EXCEED] = Result.CodeRequired;
+        map[Error.SERVICE_ACCOUNT_BLOCKED] = Result.ServiceAccountBlocked;
+        map[Error.AUTHORIZATION_FAILED] = Result.WrongLoginOrPassword;
+        map[Error.INCORRECT_FORMAT_EMAIL] = Result.WrongLoginOrPassword;
+
+        return map[code] || map[0];
+    },
     jsonCredentialCallback: function(response, callback) {
         var credential;
 
@@ -41,6 +195,8 @@ ProviderBase.prototype = {
             callback(Result.UnknownError);
             return;
         }
+
+        _captcha = '';
 
         try {
             credential = JSON.parse(response.body);
@@ -55,64 +211,33 @@ ProviderBase.prototype = {
         }
 
         if (credential.response.hasOwnProperty('error')) {
-            switch (credential.response.error.code) {
-            case Error.SERVICE_ACCOUNT_BLOCKED:
-                callback(Result.ServiceAccountBlocked, credential.response.error);
-                break;
-            case Error.AUTHORIZATION_FAILED:
-            case Error.INCORRECT_FORMAT_EMAIL:
-                callback(Result.WrongLoginOrPassword, credential.response.error);
-                break;
-            default:
-                callback(Result.UnknownError, credential.response.error);
-                break;
-            }
-
+            callback(_private.remapErrorCode(credential.response.error.code), credential.response.error);
             return;
         }
 
         callback(Result.Success, credential.response);
+    },
+    extend: function(Child, Parent) {
+        var F = function() {};
+        F.prototype = Parent.prototype;
+        Child.prototype = new F();
+        Child.prototype.constructor = Child;
+        Child.superclass = Parent.prototype;
     }
-};
+}
 
-var ProviderRegister = function(mid, hwid) {
-    this.mid = mid || _mid;
-    this.hwid = hwid || _hwid;
+var ProviderGuest = function() {
 };
-extend(ProviderRegister, ProviderBase);
-
-ProviderRegister.prototype.register = function(login, password, callback) {
-    var self = this,
-        request = new Uri(self.gnloginUri)
-            .addQueryParam('json', '1')
-            .addQueryParam('registration', '1')
-            .addQueryParam('license', 'true')
-            .addQueryParam('mid', self.mid)
-            .addQueryParam('hwid', self.hwid)
-            .addQueryParam('login', login)
-            .addQueryParam('password', password);
-
-    http.request(request, function(response) {
-        self.jsonCredentialCallback(response, callback);
-    });
-};
-
-var ProviderGuest = function(mid, hwid) {
-    this.guestMid = mid || _mid;
-    this.hwid = hwid || _hwid;
-};
-extend(ProviderGuest, ProviderBase);
 
 ProviderGuest.prototype.login = function(gameId, callback) {
-    var self = this,
-        request = new Uri(self.gnloginUri).addQueryParam('guest', 'register');
+    var request = new Uri(_gnLoginUrl).addQueryParam('guest', 'register');
 
-    if (self.guestMid) {
-        request.addQueryParam('mid', self.guestMid)
+    if (_mid) {
+        request.addQueryParam('mid', _mid)
     }
 
-    if (self.hwid) {
-        request.addQueryParam('hwid', self.hwid)
+    if (_hwid) {
+        request.addQueryParam('hwid', _hwid)
     }
 
     if (gameId) {
@@ -120,72 +245,28 @@ ProviderGuest.prototype.login = function(gameId, callback) {
     }
 
     http.request(request, function(response) {
-        self.jsonCredentialCallback(response, callback);
+        _private.jsonCredentialCallback(response, callback);
     });
 };
 
 ProviderGuest.prototype.confirm = function(userId, appKey, login, password, callback) {
-    var self = this,
-        request = new Uri(self.gnloginUri)
-            .addQueryParam('guest', 'confirm')
-            .addQueryParam('hwid', self.hwid)
-            .addQueryParam('userId', userId)
-            .addQueryParam('appKey', appKey)
-            .addQueryParam('login', login)
-            .addQueryParam('password', password);
+    var request = new Uri(self.gnloginUri)
+        .addQueryParam('guest', 'confirm')
+        .addQueryParam('hwid', _hwid)
+        .addQueryParam('userId', userId)
+        .addQueryParam('appKey', appKey)
+        .addQueryParam('login', login)
+        .addQueryParam('password', password);
 
     http.request(request, function(response) {
-        self.jsonCredentialCallback(response, callback);
+        _private.jsonCredentialCallback(response, callback);
     });
 };
-
-var ProviderGameNet = function(hwid) {
-    this.hwid = hwid || _hwid;
-};
-extend(ProviderGameNet, ProviderBase);
-
-ProviderGameNet.prototype.login = function(login, password, callback) {
-    var self = this,
-        request = new Uri(self.gnloginUri)
-            .addQueryParam('login', login)
-            .addQueryParam('passhash', Sha1.hash(password))
-            .addQueryParam('hwid', self.hwid)
-            .addQueryParam('json', 1);
-
-    http.request(request, function(response) {
-        self.jsonCredentialCallback(response, callback);
-    });
-};
-
-ProviderGameNet.prototype.loginByHash = function(login, hash, callback) {
-    var self = this,
-        request = new Uri(self.gnloginUri)
-            .addQueryParam('login', login)
-            .addQueryParam('passhash', hash)
-            .addQueryParam('hwid', self.hwid)
-            .addQueryParam('json', 1);
-
-    http.request(request, function(response) {
-        self.jsonCredentialCallback(response, callback);
-    });
-};
-
-ProviderGameNet.prototype.refreshCookie = function(userId, appKey, callback) {
-    var self = this,
-        request = new Uri(self.gnloginUri)
-            .addQueryParam('refreshCookie', '1')
-            .addQueryParam('userId', userId)
-            .addQueryParam('appKey', appKey);
-
-    http.request(request, function(response) {
-        self.jsonCredentialCallback(response, callback);
-    });
-}
 
 var ProviderVk = function(parent, hwid) {
     this.appId = 2452628;
-    this.redirectUrl = 'https://gnlogin.ru/social';
-    this.titleApiUrl = 'gnlogin.ru';
+    this.redirectUrl = _gnLoginUrl + '/social';
+    this.titleApiUrl = _gnLoginTitleApiUrl;
     this.parentObject = parent;
     this.browser = null;
     this.browserComponent = null;
@@ -362,20 +443,7 @@ ProviderVk.prototype.linkTitleChanged = function(title, callback) {
     this.browser.link(code, self.redirectUrl + '?action=link', function(isSuccess, response) {
         if (response.hasOwnProperty('error')) {
             self.browser.destroy();
-
-            switch (response.error.code) {
-            case 102:
-                callback(Result.ServiceAccountBlocked, response.error);
-                break;
-            case 100:
-            case 110:
-                callback(Result.WrongLoginOrPassword, response.error);
-                break;
-            default:
-                callback(Result.UnknownError, response.error);
-                break;
-            }
-
+            callback(_private.remapErrorCode(response.error.code), response.error);
             return;
         }
 
