@@ -250,7 +250,7 @@ ProviderGuest.prototype.login = function(gameId, callback) {
 };
 
 ProviderGuest.prototype.confirm = function(userId, appKey, login, password, callback) {
-    var request = new Uri(self.gnloginUri)
+    var request = new Uri(_gnLoginUrl)
         .addQueryParam('guest', 'confirm')
         .addQueryParam('hwid', _hwid)
         .addQueryParam('userId', userId)
