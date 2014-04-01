@@ -1,6 +1,5 @@
 .pragma library
 
-Qt.include('./Crypt.js');
 Qt.include('./restapi.js');
 
 //Replaced during CI build
@@ -131,8 +130,9 @@ function register(login, password, callback) {
 function loginByGameNet(login, password, callback) {
     var request = new Uri(_gnLoginUrl)
         .addQueryParam('login', login)
-        .addQueryParam('passhash', Sha1.hash(password))
+        .addQueryParam('passhash', password)
         .addQueryParam('hwid', _hwid)
+        .addQueryParam('new', 1)
         .addQueryParam('json', 1);
 
     if (_captcha) {
