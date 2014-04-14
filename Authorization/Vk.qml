@@ -37,6 +37,8 @@ Window {
     WebView {
         id: browser
 
+        signal loadFailedFixed();
+
         anchors.fill: parent
         preferredWidth: parent.width
         preferredHeight: parent.height
@@ -49,6 +51,17 @@ Window {
             offlineWebApplicationCacheEnabled: false
         }
 
-        Component.onCompleted: WebViewHelper.setCookiesFromUrl('', 'https://vk.com/')
+        Component.onCompleted: window.clearCookies();
+        onLoadFailed: loadFailTimer.start();
+        onLoadStarted: loadFailTimer.stop();
+
+        Timer {
+            id: loadFailTimer
+
+            interval: 100
+            repeat: false
+            running: false
+            onTriggered: browser.loadFailedFixed();
+        }
     }
 }

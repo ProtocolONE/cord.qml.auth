@@ -325,7 +325,7 @@ ProviderVk.prototype.link = function(callback) {
             return;
         }
 
-        self.browser.webView.loadFailed.connect(function() { self.loadFailed(callback); });
+        self.browser.webView.loadFailedFixed.connect(function() { self.loadFailed(callback); });
         self.browser.webView.titleChanged.connect(function(title) { self.linkTitleChanged(title, callback); });
         self.browser.webView.urlChanged.connect(function(url) { self.urlChanged(url, callback); });
         self.browser.webView.url = self.getUrl('action=link');
@@ -352,7 +352,7 @@ ProviderVk.prototype.login = function(callback) {
             return;
         }
 
-        self.browser.webView.loadFailed.connect(function() { self.loadFailed(callback); });
+        self.browser.webView.loadFailedFixed.connect(function() { self.loadFailed(callback); });
         self.browser.webView.titleChanged.connect(function(title) { self.loginTitleChanged(title, callback); });
         self.browser.webView.urlChanged.connect(function(url) { self.urlChanged(url, callback); });
         self.browser.webView.url = self.getUrl('qGNA=1');
