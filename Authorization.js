@@ -192,6 +192,7 @@ var _private = {
         var credential;
 
         if (response.status !== 200) {
+            console.log('Auth error. Response status: ', response.status);
             callback(Result.UnknownError);
             return;
         }
@@ -201,16 +202,19 @@ var _private = {
         try {
             credential = JSON.parse(response.body);
         } catch (e) {
+            console.log('Auth error. Json parse failed. Bad response: ', response.body);
             callback(Result.UnknownError);
             return;
         }
 
         if (!credential.hasOwnProperty('response')) {
+            console.log('Auth error. Response is empty. Bad response: ', response.body);
             callback(Result.UnknownError, credential);
             return;
         }
 
         if (credential.response.hasOwnProperty('error')) {
+            console.log('Auth error. Response has error. Bad response: ', response.body);
             callback(_private.remapErrorCode(credential.response.error.code), credential.response.error);
             return;
         }
