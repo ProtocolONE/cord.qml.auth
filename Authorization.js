@@ -908,7 +908,7 @@ ProviderVk.prototype.login = function(callback) {
         self.browser.webView.loadFailedFixed.connect(function() { self.loadFailed(callback); });
         self.browser.webView.titleChanged.connect(function(title) { self.loginTitleChanged(title, callback); });
         self.browser.webView.urlChanged.connect(function(url) { self.urlChanged(url, callback); });
-        self.browser.webView.url = self.getUrl('qGNA=1');
+        self.browser.webView.url = self.getUrl();
         self.browser.closing.connect(function() { callback(Result.Cancel); });
     });
 };
@@ -956,6 +956,10 @@ ProviderVk.prototype.loginTitleChanged = function(title, callback) {
         return;
     }
 
+    if (!this.browser.webView.isLoaded) {
+        return;
+    }
+
     userId = titleUri.getQueryParamValue('userId');
     appKey = titleUri.getQueryParamValue('appKey');
     cookie = titleUri.getQueryParamValue('ga');
@@ -982,6 +986,10 @@ ProviderVk.prototype.linkTitleChanged = function(title, callback) {
     if ('access_denied' === currentUri.getQueryParamValue('error')) {
         this.browser.destroy();
         callback(Result.Cancel);
+        return;
+    }
+
+    if (!this.browser.webView.isLoaded) {
         return;
     }
 
