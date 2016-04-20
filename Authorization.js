@@ -623,10 +623,10 @@ function sendUnblockCode(login, method, callback) {
  * Generate new cookie string by given userId and appKey.
  */
 function refreshCookie(userId, appKey, callback) {
-    var request = new Uri(_gnLoginUrl)
+    var request = new Uri(_gnLoginUrl + '/internals/refreshCookie/')
         .addQueryParam('refreshCookie', '1')
         .addQueryParam('userId', userId)
-        .addQueryParam('appKey', appKey);
+        .addQueryParam('appKey', Qt.md5(appKey + 'EqVGL86ahyzADHEextuEFqHJ'));
 
     http.request(request, function(response) {
         _private.jsonCredentialCallback(response, callback);
