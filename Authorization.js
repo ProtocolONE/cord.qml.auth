@@ -725,6 +725,16 @@ function linkVkAccount(parent, callback) {
     auth.link(callback);
 }
 
+function loginByOk(parent, callback) {
+    var auth = new ProviderOk(parent);
+    auth.login(callback);
+}
+
+function linkOkAccount(parent, callback) {
+    var auth = new ProviderOk(parent);
+    auth.link(callback);
+}
+
 /**
  * Return True is given code is success code.
  *
@@ -830,17 +840,22 @@ ProviderGuest.prototype.confirm = function(userId, appKey, login, password, call
     });
 };
 
-var ProviderVk = function(parent, hwid) {
-    this.appId = 2452628;
-    this.redirectUrl = _gnLoginUrl + '/social';
+var ProviderOAuth = function(parent, hwid) {
+    this.appId = "Unknown";
+    this.networkId = "Unknown";
+    this.scope = "Unknown";
+    this.authHost = "Unknown";
+    this.authProtocol = "https";
+
+    this.redirectUrl = _gnLoginUrl + '/oauth';
     this.titleApiUrl = _gnLoginTitleApiUrl;
     this.parentObject = parent;
     this.browser = null;
     this.browserComponent = null;
     this.hwid = hwid || _hwid;
-};
+}
 
-ProviderVk.prototype.createBrowserComponent = function(callback) {
+ProviderOAuth.prototype.createBrowserComponent = function(callback) {
     if (this.browserComponent && this.browserComponent.status == Component.Ready) {
         callback();
         return;
@@ -872,7 +887,7 @@ ProviderVk.prototype.createBrowserComponent = function(callback) {
     }
 };
 
-ProviderVk.prototype.link = function(callback) {
+ProviderOAuth.prototype.link = function(callback) {
     var self = this;
 
     if (typeof callback !== 'function') {
@@ -900,7 +915,7 @@ ProviderVk.prototype.link = function(callback) {
     });
 };
 
-ProviderVk.prototype.login = function(callback) {
+ProviderOAuth.prototype.login = function(callback) {
     var self = this;
     if (typeof callback !== 'function') {
         throw new Exception('Callback must be provided');
@@ -927,28 +942,36 @@ ProviderVk.prototype.login = function(callback) {
     });
 };
 
-ProviderVk.prototype.getUrl = function(params) {
-    var rp = this.redirectUrl + '?hwid=' + this.hwid + (params ? ('&' + params) : '')
-        , uri;
+ProviderOAuth.prototype.getUrl = function(params) {
+    var rp, uri;
+    rp = new Uri(this.redirectUrl)
+        .addQueryParam("network", this.networkId)
+        .addQueryParam("hwid", this.hwid)
+        .toString();
+
+    if (!!params) {
+        rp = rp + ('&' + params);
+    }
 
     uri = new Uri()
-        .setHost('http://oauth.vk.com')
+        .setProtocol(this.authProtocol)
+        .setHost(this.authHost)
         .setPath('/oauth/authorize')
         .addQueryParam('client_id', this.appId)
         .addQueryParam('response_type', 'code')
-        .addQueryParam('scope', 'friends,offline')
+        .addQueryParam('scope', this.scope)
         .addQueryParam('display', 'mobile')
-        .addQueryParam('redirect_uri', rp);
+        .addQueryParam('redirect_uri', encodeURIComponent(rp));
 
-    return uri.toString()
+    return uri.toString();
 };
 
-ProviderVk.prototype.loadFailed = function(callback) {
+ProviderOAuth.prototype.loadFailed = function(callback) {
     this.browser.destroy();
     callback(Result.Cancel);
 };
 
-ProviderVk.prototype.loginTitleChanged = function(title, callback) {
+ProviderOAuth.prototype.loginTitleChanged = function(title, callback) {
     var titleUri = new Uri(this.browser.webView.title),
         currentUri, userId, appKey, cookie;
 
@@ -988,7 +1011,7 @@ ProviderVk.prototype.loginTitleChanged = function(title, callback) {
     callback(Result.Success, { userId: userId, appKey: appKey, cookie: cookie });
 };
 
-ProviderVk.prototype.linkTitleChanged = function(title, callback) {
+ProviderOAuth.prototype.linkTitleChanged = function(title, callback) {
     var titleUri = new Uri(this.browser.webView.title),
         currentUri, code;
 
@@ -1039,9 +1062,9 @@ ProviderVk.prototype.linkTitleChanged = function(title, callback) {
     });
 };
 
-ProviderVk.prototype.urlChanged = function(url, callback) {
+ProviderOAuth.prototype.urlChanged = function(url, callback) {
     var uri = new Uri(this.browser.webView.url);
-    if (0 !== uri.host().indexOf('oauth.vk.com')) {
+    if (0 !== uri.host().indexOf(this.authHost)) {
         return;
     }
 
@@ -1050,3 +1073,26 @@ ProviderVk.prototype.urlChanged = function(url, callback) {
         callback(Result.Cancel);
     }
 };
+
+var ProviderVk = function(parent, hwid) {
+    ProviderVk.superclass.constructor.apply(this, arguments);
+
+    this.appId = 2452628;
+    this.networkId = "vk";
+    this.scope = "friends,offline";
+    this.authHost = "oauth.vk.com";
+    this.authProtocol = "https";
+}
+
+_private.extend(ProviderVk, ProviderOAuth);
+
+var ProviderOk = function(parent, hwid) {
+    ProviderOk.superclass.constructor.apply(this, arguments);
+
+    this.appId = 1248179200;
+    this.networkId = "ok";
+    this.scope = "valuable_access,long_access_token";
+    this.authHost = "connect.ok.ru";
+    this.authProtocol = "https";
+}
+_private.extend(ProviderOk, ProviderOAuth);
