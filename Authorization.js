@@ -753,7 +753,6 @@ function linkFbAccount(parent, callback) {
 function isSuccess(code) {
     return Result.Success === code;
 }
-
 var _private = {
     remapErrorCode: function(code) {
         var map = {};
@@ -1102,7 +1101,7 @@ var ProviderOk = function(parent, hwid) {
 
     this.appId = 1248179200;
     this.networkId = "ok";
-    this.scope = "valuable_access,long_access_token";
+    this.scope = "valuable_access,get_email";
     this.authHost = "connect.ok.ru";
     this.authProtocol = "https";
 }

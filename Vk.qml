@@ -37,7 +37,7 @@ Window {
 
     visible: true
     title: qsTr('WINDOW_TITLE_VK_AUTH')
-    flags: Qt.Tool | Qt.WindowStaysOnTopHint
+    flags: Qt.Tool | Qt.WindowStaysOnTopHint | Qt.CustomizeWindowHint | Qt.SplashScreen
     modality: Qt.ApplicationModal
     onClosing: window.clearCookies();
 
@@ -88,14 +88,28 @@ Window {
         }
     }
 
+    Rectangle {
+        width: 90
+        height: 90
+        color: Styles.contentBackgroundDark
+        rotation: 45
+        transformOrigin: Item.Center
+
+        anchors {
+            horizontalCenter: parent.right
+            verticalCenter: parent.top
+        }
+
+    }
+
     ImageButton {
         width: 32
         height: 30
         anchors {
             right: parent.right
-            rightMargin: 15
+            rightMargin: 2
             top: parent.top
-            topMargin: 9
+            topMargin: 2
         }
         style {normal: "#00000000"; hover: "#00000000"; disabled: "#00000000"}
         styleImages {
