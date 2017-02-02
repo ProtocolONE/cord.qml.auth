@@ -864,6 +864,7 @@ var ProviderOAuth = function(parent, hwid) {
     this.browser = null;
     this.browserComponent = null;
     this.hwid = hwid || _hwid;
+    this.hwid64 = Qt.btoa(this.hwid);
 }
 
 ProviderOAuth.prototype.createBrowserComponent = function(callback) {
@@ -957,7 +958,7 @@ ProviderOAuth.prototype.getUrl = function(params) {
     var rp, uri;
     rp = new Uri(this.redirectUrl)
         .addQueryParam("network", this.networkId)
-        .addQueryParam("hwid", this.hwid)
+        .addQueryParam("hwid64", encodeURIComponent(this.hwid64))
         .toString();
 
     if (!!params) {
