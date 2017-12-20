@@ -490,6 +490,10 @@ Error.PHONE_ALREADY_IN_USE = 127;
 Error.UNABLE_DELIVER_SMS = 128;
 Error.INVALID_PHONE_FORMAT = 129;
 Error.PHONE_BLOCKED = 130;
+Error.TFA_SMS_TIMEOUT_IS_NOT_EXPIRED = 136;
+Error.TFA_NEED_SMS_CODE = 137;
+Error.TFA_NEED_APP_CODE = 138;
+Error.TFA_INVALID_CODE = 139;
 Error.PARAMETER_MISSING = 200;
 Error.WRONG_AUTHTYPE = 201;
 Error.WRONG_SERVICEID = 202;
@@ -555,9 +559,11 @@ http.request = function(options, callback) {
 var authVersion = "@VERSION"
     , _gnLoginUrl = 'https://gnlogin.ru'
     , _gnLoginTitleApiUrl = 'gnlogin.ru'
+    , _apiUrl = 'https://gnapi.com:8443/restapi'
     , _hwid
     , _mid
-    , _captcha;
+    , _captcha
+    , _code2fa = "";
 
 var Result = function() {};
 Result.Success = 1;
@@ -568,6 +574,10 @@ Result.UnknownError = 5;
 Result.Error = 6;
 Result.CaptchaRequired = 7;
 Result.CodeRequired = 8;
+Result.SecuritySMSCodeRequired = 9;
+Result.SecurityAppCodeRequired = 10;
+Result.SecurityCodeInvalid = 11;
+Result.SecurityCodeTimeoutIsNotExpired = 12;
 
 /**
  * Setup package params - hwid, mid, gnLoginUrl and titleApiUrl.
@@ -579,6 +589,7 @@ function setup(options) {
     _mid = options.mid || '';
     _gnLoginUrl = options.gnLoginUrl || _gnLoginUrl;
     _gnLoginTitleApiUrl = options.titleApiUrl || _gnLoginTitleApiUrl;
+    _apiUrl = options.apiUrl || _apiUrl;
 }
 
 /**
@@ -586,6 +597,13 @@ function setup(options) {
  */
 function setCaptcha(value) {
     _captcha = value;
+}
+
+/**
+ * Set captcha text for next authorization attempt.
+ */
+function setCode2fa(value) {
+    _code2fa = value;
 }
 
 /**
@@ -692,6 +710,10 @@ function loginByGameNet(login, password, callback) {
         request.addQueryParam('captcha', _captcha);
     }
 
+    if (_code2fa) {
+        request.addQueryParam('code2fa', _code2fa);
+    }
+
     var options = {
         method: "post",
         uri: request
@@ -699,6 +721,29 @@ function loginByGameNet(login, password, callback) {
 
     http.request(options, function(response) {
         _captcha = '';
+        _code2fa = '';
+        _private.jsonCredentialCallback(response, callback);
+    });
+}
+
+/**
+ * Request security SMS code.
+ *
+ * @param {string} login
+ * @param {function} callback
+ */
+function requestSMSCode(login, callback) {
+    var request = new Uri(_apiUrl)
+        .addQueryParam('method', 'user.send2FaKeyViaSms')
+        .addQueryParam('login', login)
+        .addQueryParam('format', 'json');
+
+    var options = {
+        method: "post",
+        uri: request
+    };
+
+    http.request(options, function(response) {
         _private.jsonCredentialCallback(response, callback);
     });
 }
@@ -762,6 +807,10 @@ var _private = {
         map[Error.SERVICE_ACCOUNT_BLOCKED] = Result.ServiceAccountBlocked;
         map[Error.AUTHORIZATION_FAILED] = Result.WrongLoginOrPassword;
         map[Error.INCORRECT_FORMAT_EMAIL] = Result.WrongLoginOrPassword;
+        map[Error.TFA_SMS_TIMEOUT_IS_NOT_EXPIRED] = Result.SecurityCodeTimeoutIsNotExpired;
+        map[Error.TFA_NEED_SMS_CODE] = Result.SecuritySMSCodeRequired;
+        map[Error.TFA_NEED_APP_CODE] = Result.SecurityAppCodeRequired;
+        map[Error.TFA_INVALID_CODE] = Result.SecurityCodeInvalid;
 
         return map[code] || map[0];
     },
@@ -775,6 +824,7 @@ var _private = {
         }
 
         _captcha = '';
+        _code2fa = '';
 
         try {
             credential = JSON.parse(response.body);
@@ -1091,7 +1141,7 @@ var ProviderVk = function(parent, hwid) {
 
     this.appId = 2452628;
     this.networkId = "vk";
-    this.scope = "friends,offline";
+    this.scope = "friends,offline,email";
     this.authHost = "oauth.vk.com";
     this.authProtocol = "https";
 }
