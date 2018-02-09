@@ -696,15 +696,17 @@ function register(login, password, callback) {
  *
  * @param {string} login
  * @param {string} password
+ * @param {bool} remember
  * @param {function} callback
  */
-function loginByGameNet(login, password, callback) {
+function loginByGameNet(login, password, remember, callback) {
     var request = new Uri(_gnLoginUrl)
         .addQueryParam('login', login)
         .addQueryParam('passhash', encodeURIComponent(password))
         .addQueryParam('hwid', _hwid)
         .addQueryParam('new', 1)
-        .addQueryParam('json', 1);
+        .addQueryParam('json', 1)
+        .addQueryParam('trustedLocation', remember ? 1 : 0);
 
     if (_captcha) {
         request.addQueryParam('captcha', _captcha);
