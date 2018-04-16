@@ -592,6 +592,7 @@ Result.SecuritySMSCodeRequired = 9;
 Result.SecurityAppCodeRequired = 10;
 Result.SecurityCodeInvalid = 11;
 Result.SecurityCodeTimeoutIsNotExpired = 12;
+Result.Required2FA = 13;
 
 /**
  * Setup package params - hwid, mid, gnLoginUrl and titleApiUrl.
@@ -724,6 +725,7 @@ function loginByGameNet(login, password, remember, callback) {
         .addQueryParam('hwid', _hwid)
         .addQueryParam('new', 1)
         .addQueryParam('json', 1)
+        .addQueryParam('2fa', 1)
         .addQueryParam('trustedLocation', remember ? 1 : 0);
 
     if (_captcha) {
@@ -740,8 +742,6 @@ function loginByGameNet(login, password, remember, callback) {
     };
 
     http.request(options, function(response) {
-        _captcha = '';
-        _code2fa = '';
         _private.jsonCredentialCallback(response, callback);
     });
 }
@@ -749,17 +749,50 @@ function loginByGameNet(login, password, remember, callback) {
 /**
  * Request security SMS code.
  *
- * @param {string} login
+ * @param {string} user (login or userId)
+ * @param {bool} type (if type = true then login else if type = false  then userId)
  * @param {function} callback
  */
-function requestSMSCode(login, callback) {
+function requestSMSCode(user, type, callback) {
     var request = new Uri(_apiUrl)
         .addQueryParam('method', 'user.send2FaKeyViaSms')
-        .addQueryParam('login', login)
         .addQueryParam('format', 'json');
+
+    if (type)
+        request.addQueryParam('login', user);
+    else
+        request.addQueryParam('userId', user);
+
 
     var options = {
         method: "post",
+        uri: request
+    };
+
+    http.request(options, function(response) {
+        _private.jsonCredentialCallback(response, callback);
+    });
+}
+
+/**
+ * Request validate AuthToken
+ *
+ * @param {string} token
+ * @param {string} userId
+ * @param {string} code
+ * @param {bool} remember
+ * @param {function} callback
+ */
+function requestValidateAuthToken (token, userId, remember, callback) {
+    var request = new Uri(_gnLoginUrl + '/validateAuthToken')
+        .addQueryParam('token', token)
+        .addQueryParam('userId', userId)
+        .addQueryParam('code', _code2fa)
+        .addQueryParam('2fa', 1)
+        .addQueryParam('isTrustedLocation', remember ? 1 : 0);
+
+    var options = {
+        method: "get",
         uri: request
     };
 
@@ -818,6 +851,16 @@ function linkFbAccount(parent, callback) {
 function isSuccess(code) {
     return Result.Success === code;
 }
+
+/**
+ * Return True is given code 2FA is required code.
+ *
+ * @return bool
+ */
+function isRequired2FA(code) {
+    return Result.Required2FA  === code;
+}
+
 var _private = {
     remapErrorCode: function(code) {
         var map = {};
@@ -1027,6 +1070,7 @@ ProviderOAuth.prototype.login = function(callback) {
 ProviderOAuth.prototype.getUrl = function(params) {
     var rp, uri;
     rp = new Uri(this.redirectUrl)
+        .addQueryParam("2fa", 1)
         .addQueryParam("network", this.networkId)
         .addQueryParam("hwid64", encodeURIComponent(this.hwid64))
         .toString();
@@ -1055,7 +1099,7 @@ ProviderOAuth.prototype.loadFailed = function(callback) {
 
 ProviderOAuth.prototype.loginTitleChanged = function(title, callback) {
     var titleUri = new Uri(this.browser.webView.title),
-        currentUri, userId, appKey, cookie;
+        currentUri, userId, appKey, cookie, authToken, codeType;
 
     if (0 !== titleUri.host().indexOf(this.titleApiUrl)) {
         return;
@@ -1079,18 +1123,20 @@ ProviderOAuth.prototype.loginTitleChanged = function(title, callback) {
         return;
     }
 
+    codeType = titleUri.getQueryParamValue('codeType');
+    authToken = titleUri.getQueryParamValue('authToken');
     userId = titleUri.getQueryParamValue('userId');
     appKey = titleUri.getQueryParamValue('appKey');
     cookie = titleUri.getQueryParamValue('ga');
 
-    if (!userId || !appKey || !cookie) {
-        this.browser.destroy();
-        callback(Result.Cancel);
-        return;
-    }
-
     this.browser.destroy();
-    callback(Result.Success, { userId: userId, appKey: appKey, cookie: cookie });
+
+    if (codeType && authToken && userId)
+        callback(Result.Required2FA, { codeType: codeType, userId: userId, authToken: authToken });
+    else if (userId && appKey && cookie)
+        callback(Result.Success, { userId: userId, appKey: appKey, cookie: cookie });
+    else
+        callback(Result.Cancel);
 };
 
 ProviderOAuth.prototype.linkTitleChanged = function(title, callback) {
