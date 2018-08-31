@@ -644,7 +644,7 @@ function getCaptchaImageSource(login) {
 /**
  * Send unblock code to user.
  *
- * @param {string} login GameNet login
+ * @param {string} login ProtocolOne login
  * @param {string} method Should me `email` or `sms`
  * @param {function} callback
  */
@@ -688,7 +688,7 @@ function unblock(login, code, callback) {
 }
 
 /**
- * Register new gamenet user.
+ * Register new ProtocolOne user.
  *
  * @param {string} login
  * @param {string} password
@@ -715,14 +715,14 @@ function register(login, password, callback) {
 }
 
 /**
- * Login in gamenet by login and password.
+ * Login in ProtocolOne by login and password.
  *
  * @param {string} login
  * @param {string} password
  * @param {bool} remember
  * @param {function} callback
  */
-function loginByGameNet(login, password, remember, callback) {
+function loginByProtocolOne(login, password, remember, callback) {
     var request = new Uri(_gnLoginUrl)
         .addQueryParam('login', login)
         .addQueryParam('passhash', encodeURIComponent(password))
@@ -806,7 +806,7 @@ function requestValidateAuthToken (token, userId, remember, callback) {
 }
 
 /**
- * Login in gamenet by VK.
+ * Login in ProtocolOne by VK.
  *
  * @param {QMLObject} parent
  * @param {function} callback
@@ -817,7 +817,7 @@ function loginByVk(parent, callback) {
 }
 
 /**
- * Link gamenet account with VK.
+ * Link ProtocolOne account with VK.
  *
  * @param {QMLObject} parent
  * @param {function} callback
