@@ -1,0 +1,4 @@
+module Dev
+plugin QmlViewerDevHelperX86
+typeinfo plugins.qmltypes
+designersupported

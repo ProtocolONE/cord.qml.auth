@@ -1,0 +1,9 @@
+var XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
+
+function enableLog() {
+  http.logRequest = true;
+}
+
+function disableLog() {
+  http.logRequest = false;
+}
