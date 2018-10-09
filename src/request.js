@@ -32,6 +32,10 @@ http.request = function(options, callback) {
         if (http.logRequest) {
             // INFO debug output
             var tmp = 'Request: ' + uri.toString();
+            if (options.hasOwnProperty('post')) {
+                tmp += '\nPost:' + options.post;
+            }
+
             tmp += '\nStatus: ' + xhr.status;
             try {
                 var debugResponseObject = JSON.parse(xhr.responseText);
@@ -55,7 +59,7 @@ http.request = function(options, callback) {
 
         xhr.send(null);
     } else {
-        xhr.open('POST', uri.protocol() + '://' + uri.host() + uri.path());
+        xhr.open('POST', uri.toString());
 
         if (userAgent) {
             xhr.setRequestHeader('QtBug', 'QTBUG-20473\r\nUser-Agent: ' + userAgent);

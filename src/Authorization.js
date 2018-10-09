@@ -66,7 +66,8 @@ function getOAuthServices(callback) {
         uri: request
         }
         , httpStatusToResultMap
-        , result = 0;
+        , result = 0
+        , msg;
 
 
     httpStatusToResultMap = {
@@ -81,7 +82,13 @@ function getOAuthServices(callback) {
             result = httpStatusToResultMap[response.status];
         }
 
-        callback(result, response.body);
+        msg = response.body;
+        try {
+            msg = JSON.parse(msg);
+        } catch (e) {
+        }
+
+        callback(result, msg);
     });
 }
 
@@ -120,7 +127,6 @@ function loginByOAuth(type, callback) {
 
     function ready(port) {
 
-        // UNDONE ws vs wss, and support domain and ssl cert
         var ws = _localWebSocketUrl + ':' + port;
         var authUrl = url + '?_destination='
             + encodeURIComponent('/api/v1/oauth/result/websocket?wsUrl='+ws);

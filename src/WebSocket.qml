@@ -32,6 +32,7 @@ Item {
         ws.listen = true;
         retry.count = 0;
         retry.restart();
+        timeoutTimer.start();
     }
 
     Timer {
