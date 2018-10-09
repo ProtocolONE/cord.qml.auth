@@ -1,0 +1,8 @@
+var TestCase = require('njsunit').TestCase;
+
+var Auth = require('../../build/Authorization.Test.js'),
+    http = Auth.http,
+    Query = Auth.Query,
+    Uri = Auth.Uri
+
+;

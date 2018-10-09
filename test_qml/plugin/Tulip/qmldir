@@ -1,0 +1,4 @@
+module Tulip
+plugin QmlExtensionX86
+typeinfo plugins.qmltypes
+designersupported
