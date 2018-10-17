@@ -63,3 +63,9 @@ var _startWSServer = function(options) {
         readyCallback(server.address().port);
     });
 }
+
+var _atob = function(data) {
+    return Buffer.from(data, 'base64').toString('utf8');
+}
+
+

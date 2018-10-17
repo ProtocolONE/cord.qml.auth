@@ -15,6 +15,7 @@ module.exports = {
   requestPasswordResetCode: requestPasswordResetCode,
   changePassword: changePassword,
   setUseRealBrowser: setUseRealBrowser,
-  refreshToken: refreshToken
+  refreshToken: refreshToken,
+  decodeJwt: decodeJwt
 };
 

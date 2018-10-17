@@ -61,3 +61,10 @@ var _startWSServer = function(options) {
 
     ws.start();
 }
+
+var _atob = function(data) {
+    return Qt.atob(data);
+}
+
+
+

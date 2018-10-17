@@ -315,3 +315,22 @@ function refreshToken(token, callback) {
         _callAuthCallback(response.body, result, callback);
     });
 }
+
+function decodeJwt(encodedToken) {
+    var tokens, result;
+    encodedToken = encodedToken || ''
+    tokens = encodedToken.split('.');
+    if (!tokens || tokens.length != 3)
+        return;
+
+    try {
+        result = {
+            header: JSON.parse(_atob(tokens[0])),
+            payload: JSON.parse(_atob(tokens[1]))
+        }
+    } catch(e) {
+
+    }
+
+    return result;
+}

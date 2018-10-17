@@ -102,7 +102,7 @@ S0NXJbKlcZSsHoVC3GM7L54=
             onClicked: {
                 Authorization.setDefaultSettings();
                 Authorization.getOAuthServices(function(code, response) {
-                    console.log(response);
+                    console.log(JSON.stringify(response, null, 2));
                 })
             }
         }
@@ -125,7 +125,18 @@ S0NXJbKlcZSsHoVC3GM7L54=
 
                 Authorization.loginByOAuth('/oauth/connect/vkontakte', function(code, response) {
                     console.log('Auth code' , code, 'response:\n', JSON.stringify(response, null, 2))
+                    var jwt = response.accessToken.value;
+                    console.log(JSON.stringify(Authorization.decodeJwt(jwt), null, 2));
                 })
+            }
+        }
+
+        Button {
+            text: 'Decode JWT'
+            onClicked: {
+                var jwt = 'eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJpYXQiOjE1MzkxNTM0MTEsImV4cCI6MTUzOTE1NTIxMSwicm9sZXMiOlsiUk9MRV9VU0VSIl0sImlkIjoiNWJiZDlkZTMzNDg5ZDI5YzgzMGZkYjBkIn0.SKoEfLk7b4GshpXWXobtQeF00XVjWh1vQDe41hWVtcHGf_qSEG3WqcRFsgRdWsJ1vBTBSHjmoSupxSdNyHY6lP04wlnaFwr7w5ofBVeNPaP78bX6qnXvmBpfrvRzLX2IQBJLw89CAqfiCDJgTZzJ9Gu9K8VwygjwdtjqEhq3ugEbaBslO_dHQ-6rXwk5CnjsSTsTleyTERCIathB_Zl4L0UUXHgjXZ3gE_4CdTmuCnHjFOjdGmLtd1v80ZXWyuQifbwL32QPV4FniRXCrI7zEEXcBJAlGwF0gPYeOht3G2wgpYw4rD0dADYEX1J5gtAnKujxdULdvR1S6Xnq0Rt9rKAkC0OC2Gz9RjWfY92Kw-NPDeFlXHBEaIm0Q6XOvX9ctRSb5S7K4_FbPFTlIBQnlzipWt7pXUH6ObSJw0y_ZsmBfvbL0nCgqyZzKCAYOo2T88gjhbdl7hivICjcVNWD6R1cU5llwEC85t2AyqLpZPDdgpuevwDjXOwCDJLylrYxTK5oL_bi-2fKLzxRqNNhAYQ3Hs4CpAMML1PqmcxKXApN8U7d1jxgteL8l0XIEK47ZjoyD2kXL9fHCK0HmDeY5GWv1yRpVPExLxATcQiHyTZJQ51vdnWxn1zx9bVU8ZUCuJgGwbZYB1oVSXNWH7t5y_2Bh6_dfmxeg3ITUWZ0kCI';
+                var result = Authorization.decodeJwt(jwt);
+                console.log(JSON.stringify(result, null, 2));
             }
         }
     }
