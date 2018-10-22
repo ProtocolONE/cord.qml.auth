@@ -203,7 +203,7 @@ function registerUser(email, password, callback) {
             result = httpStatusToResultMap[response.status];
         }
 
-        _callAuthCallback(response, result, callback);
+        _callAuthCallback(response.body, result, callback);
     });
 }
 
