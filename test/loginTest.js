@@ -34,7 +34,7 @@ class LoginTestCase extends TestCase {
     // }
 
     testChangePassword (queue) {
-        //Auth.enableLog();
+        Auth.enableLog();
         Auth.changePassword('a1@a.com', '123456',  'a1s2', (result, response) => {
             this.assertEqual(Auth.Result.Success, result);
             queue();

@@ -1,8 +1,8 @@
 //Replaced during CI build
 var authLibVersion = "@VERSION"
-    , _authBaseUrl = 'https://p1_auth.eu.gamenet.ru'
+    , _authBaseUrl = 'http://auth.protocol.local:8080'
     , _apiVersion = 'v1'
-    , _authUrl = 'https://p1_auth.eu.gamenet.ru/api/v1/'
+    , _authUrl = 'http://auth.protocol.local:8080/api/v1/'
     , _hwid
     , _mid
     , _captcha
@@ -46,7 +46,7 @@ function setDefaultSettings() {
     setup({
         hwid: '',
         mid: '',
-        authUrl: 'https://p1_auth.eu.gamenet.ru',
+        authUrl: 'http://auth.protocol.local:8080',
         authVersion: 'v1'
     });
 }
@@ -60,7 +60,7 @@ function getCaptchaImageSource(login) {
 }
 
 function getOAuthServices(callback) {
-    var request = new Uri(_authUrl+'oauth/sources'),
+    var request = new Uri(_authUrl+'oauth/sources/'),
         options = {
         method: "get",
         uri: request
@@ -129,7 +129,7 @@ function loginByOAuth(type, callback) {
 
         var ws = _localWebSocketUrl + ':' + port;
         var authUrl = url + '?_destination='
-            + encodeURIComponent('/api/v1/oauth/result/websocket?wsUrl='+ws);
+            + encodeURIComponent('/api/v1/oauth/result/websocket/?wsUrl='+ws);
 
         if (http.logRequest) {
             console.log('WS opened on port: ' + port);
@@ -178,7 +178,7 @@ function loginByOAuth(type, callback) {
 }
 
 function registerUser(email, password, callback) {
-    var request = new Uri(_authUrl+'user/create'),
+    var request = new Uri(_authUrl+'user/create/'),
         options = {
             method: "post",
             uri: request
@@ -239,7 +239,7 @@ function login(email, password, captcha, callback) {
 }
 
 function requestPasswordResetCode(email, callback) {
-    var request = new Uri(_authUrl+'user/send-email/forgot')
+    var request = new Uri(_authUrl+'user/send-email/forgot/')
             .addQueryParam('email', email)
         , options = {
             method: "get",
@@ -262,7 +262,7 @@ function requestPasswordResetCode(email, callback) {
 }
 
 function changePassword(email, password, code, callback) {
-    var request = new Uri(_authUrl+'user/change-password'),
+    var request = new Uri(_authUrl+'user/change-password/'),
         options = {
             method: "post",
             uri: request
@@ -293,7 +293,9 @@ function changePassword(email, password, code, callback) {
 }
 
 function refreshToken(token, callback) {
-    var request = new Uri(_authUrl+'token/refresh/' + token),
+    var request = new Uri(_authUrl+'token/refresh/')
+            .addQueryParam('token', token)
+        ,
         options = {
             method: "get",
             uri: request
